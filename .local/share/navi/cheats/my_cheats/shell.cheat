@@ -24,6 +24,15 @@ killall <Process-name>
 
 % Shell System
 
+# List all users on system (via passwd)
+cat /etc/passwd |column -ts: | sort -nk3
+
+# List all hosts in /etc/hosts file.
+cat /etc/hosts |column -t
+
+# List all search paths in $PATH.
+echo $PATH | tr ':' '\n' | nl
+
 # Get the current path
 pwd
 

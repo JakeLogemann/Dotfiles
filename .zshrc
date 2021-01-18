@@ -284,29 +284,42 @@ function dotfiles::default-options(){
   setopt checkrunningjobs 
 }
 
-function bat-lang(){ bat -pnl $* ;}
+function dotfiles::setup-aliases(){
+  hash -d ".nvim"="$HOME/.config/nvim"
+  hash -d ".alacritty"="$HOME/.config/alacritty"
+
+  ialias rdoc="rusty-man --viewer=rich"
+  ialias reload="clear && source $HOME/.zshrc"
+  ialias tmux="tmux -2u"
+
+  # alias -s toml='background brave'
+  # alias -s html='background brave'
+  # alias -s {pdf,PDF}='background mupdf'
+  # alias -s {mp4,MP4,mov,MOV}='background vlc'
+  # alias -s {zip,ZIP}="unzip -l"
+}
+
 # List all defined options, in a more pretty way.
-function list-opt(){ setopt | bat-lang zsh ;}
-function list-fpath(){ echo $fpath | tr " " "\n" | bat-lang zsh ;}
-function list-path(){ echo $path | tr " " "\n" | bat-lang zsh ;}
-function list-hosts(){ cat /etc/hosts |column -t| bat-lang hosts ;}
-function list-users(){ cat /etc/passwd |column -ts: | sort -nk3 |bat-lang passwd ;}
-function list-keybinds(){ bindkey |grep -v "magic-space"  |tr -d "\""| column -t |bat-lang zsh; }
+function list-fpath(){ echo $fpath | tr " " "\n" | nl ;}
+function list-path(){ echo $path | tr " " "\n" | nl ;}
+function list-hosts(){ cat /etc/hosts |column -t ;}
+function list-users(){ cat /etc/passwd |column -ts: | sort -nk3 ;}
+function list-keybinds(){ bindkey |grep -v "magic-space"  |tr -d "\""| column -t ;}
 function background() { # starts one or multiple args as programs in background
   for ((i=2;i<=$#;i++)); do ${@[1]} ${@[$i]} &> /dev/null &; done
 }
 function uuid() { # Usage: uuid
-    C="89ab"
-    for ((N=0;N<16;++N)); do
-        B="$((RANDOM%256))"
-        case "$N" in
-            6)  printf '4%x' "$((B%16))" ;;
-            8)  printf '%c%x' "${C:$RANDOM%${#C}:1}" "$((B%16))" ;;
-            3|5|7|9) printf '%02x-' "$B" ;;
-            *) printf '%02x' "$B" ;;
-        esac
-    done
-    printf '\n'
+  C="89ab"
+  for ((N=0;N<16;++N)); do
+      B="$((RANDOM%256))"
+      case "$N" in
+          6)  printf '4%x' "$((B%16))" ;;
+          8)  printf '%c%x' "${C:$RANDOM%${#C}:1}" "$((B%16))" ;;
+          3|5|7|9) printf '%02x-' "$B" ;;
+          *) printf '%02x' "$B" ;;
+      esac
+  done
+  printf '\n'
 }
 
 
@@ -321,26 +334,12 @@ function expand-alias-space() {
   if [[ "$insertBlank" = "0" ]]; then zle backward-delete-char; fi
 }
 
-
-
 dotfiles::load-environment
 dotfiles::default-options
 dotfiles::setup-completion
 dotfiles::setup-history
+dotfiles::setup-aliases
 dotfiles::bind-keys
-
-hash -d ".nvim"="$HOME/.config/nvim"
-hash -d ".alacritty"="$HOME/.config/alacritty"
-
-ialias rdoc="rusty-man --viewer=rich"
-ialias reload="clear && source $HOME/.zshrc"
-ialias tmux="tmux -2u"
-
-# alias -s toml='background brave'
-# alias -s html='background brave'
-# alias -s {pdf,PDF}='background mupdf'
-# alias -s {mp4,MP4,mov,MOV}='background vlc'
-# alias -s {zip,ZIP}="unzip -l"
 
 source_if_exists "$XDG_CONFIG_DIR/sh/aliases.sh"
 source_if_exists /usr/share/skim/{key-bindings,completion}.zsh
@@ -348,4 +347,4 @@ source_if_exists /usr/share/fzf/{key-bindings,completion}.zsh
 source_if_exists "$HOME/.fzf/shell/"{key-bindings,completion}.zsh
 source_if_exists "$HOME/.zshrc.local"
 
-# vim: et:ts=2:noai:noci
+# vim: ts=2 sts=2 et noai noci
