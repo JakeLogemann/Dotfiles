@@ -1,0 +1,115 @@
+#!/usr/bin/env -S just --color=always --working-directory "${HOME}" --justfile
+# vi: ft=just
+dotfiles             := "cd "+GIT_WORK_TREE+" && ./.local/share/bin/dotfiles"
+cyan                 := "\\u001b[36m"
+blue                 := "\\u001b[34m"
+reset                := "\\u001b[0m"
+export PAGER         := env_var_or_default("PAGER", "bat")
+export EDITOR        := env_var_or_default("EDITOR", "nvim")
+export VISUAL        := EDITOR
+export HOST          := env_var_or_default("HOST", `hostname`)
+export GIT_BRANCH    := env_var_or_default("GIT_BRANCH", "master")
+export BAT           := env_var_or_default("BAT", `which bat 2>/dev/null || true`)
+export SK            := env_var_or_default("SK", `which sk 2>/dev/null || true`)
+export RG            := env_var_or_default("RG", `which rg 2>/dev/null || true`)
+export JQ            := env_var_or_default("JQ", `which jq 2>/dev/null || true`)
+export HOME          := env_var_or_default("HOME", "/home/jake")
+export GIT_DIR       := GIT_WORK_TREE+"/.git"
+export GIT_WORK_TREE := HOME+"/dotfiles"
+
+# Display this help text.
+help:
+  @{{dotfiles}} --list | sed -e 1d -e 's/    //'
+
+# Output neofetch info page.
+info:
+  @clear && "{{GIT_WORK_TREE}}/bin/neofetch"
+
+# Display evaluated variables.
+eval:
+  @{{dotfiles}} --evaluate
+
+# Edit files in GIT_WORK_TREE.
+edit:
+  @cd "{{GIT_WORK_TREE}}" && {{EDITOR}} .
+
+# List Environment Variables
+env:
+  @env | sort | grep -ve '^PATH=' | nl | less
+
+# List PATH values (in order).
+path:
+  @echo $PATH | tr ':' '\n' | nl | less
+
+# check git status.
+status: (git "status" "-sb")
+
+# output the dotfiles directory.
+dir: 
+  @echo "$GIT_WORK_TREE"
+
+# Copy dir from ~/ into GIT_WORK_TREE.
+absorb +path:
+  @test -r "{{GIT_WORK_TREE}}/{{path}}" || cp -rv "{{HOME}}/{{path}}" "{{GIT_WORK_TREE}}/{{path}}"
+
+# Wraps `git` for easier usage.
+git +args='':
+  git {{args}}
+
+# Add any edited files to the repository.
+add +args='.': switch-branch (git ("add "+args))
+
+# Synchonize, and commit the result.
+commit +args='': switch-branch (git ("commit "+args))
+
+# Switch to a branch named after this host
+switch-branch: (git ("checkout -qB "+GIT_BRANCH))
+
+# Amend a previous commit.
+amend +args='': add (git ("commit --amend --edit "+args))
+
+# Upload changes to remote git repository.
+push to="origin": (git ("push -u "+to+" "+GIT_BRANCH))
+# Force upload changes to remote git repository.
+force-push to="origin": (git ("push -fu "+to+" "+GIT_BRANCH))
+
+# Upgrade the system using `topgrade`.
+upgrade:
+  @test -x `which topgrade 2>/dev/null || true` || cargo install topgrade
+  topgrade -yk
+
+# List all dangling symlinks in home directory.
+@list-dangling:
+  find "$HOME" -type l -exec test ! -e {} \; -print 2>/dev/null || true
+
+# List all available dotfiles.
+@list-files:
+  git ls-files --cached --modified --others --exclude-standard \
+  | sed -e '/.gitignore/d' -e '/README.md/d' -e '/tags/d'
+
+# List all available dotfiles.
+list-dirs:
+  @{{dotfiles}} list-files | xargs -n1 dirname | sort -u | sed -e 1d
+
+# Remove dangling symlinks.
+prune-dangling:
+  @{{dotfiles}} list-dangling | xargs rm -v
+
+# Creates all directories git knows about in the home dir.
+create-dirs: 
+  #!/usr/bin/env -S bash -eu
+  for DIRNAME in $({{dotfiles}} list-dirs); do 
+    echo -e " {{cyan}}MKDIR{{reset}}    \"$HOME/$DIRNAME\" " 
+    mkdir -pv "$HOME/$DIRNAME"
+  done
+
+# Creates all directories git knows about in the home dir.
+create-links: 
+  #!/usr/bin/env -S bash -eu
+  for FILENAME in $({{dotfiles}} list-files); do 
+    echo -e " {{blue}}SYMLINK{{reset}}  \"$HOME/$FILENAME\" " 
+    ln -sf "{{GIT_WORK_TREE}}/$FILENAME" "{{HOME}}/$FILENAME"
+  done
+
+# Creates all directories git knows about in the home dir.
+install: add create-dirs create-links

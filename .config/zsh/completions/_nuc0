@@ -1,0 +1,3 @@
+#compdef nuc0
+local -a recipes=( ${(@s/ /)$(nuc0 --summary)} )
+_describe 'nuc0' recipes

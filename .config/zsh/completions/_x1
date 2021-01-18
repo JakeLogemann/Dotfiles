@@ -1,0 +1,3 @@
+#compdef x1
+local -a recipes=( ${(@s/ /)$(x1 --summary)} )
+_describe 'x1' recipes

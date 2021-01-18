@@ -1,0 +1,4 @@
+% go
+
+# Initialize default go directory structure.
+mkdir -p ~/go/{src,pkg,bin}

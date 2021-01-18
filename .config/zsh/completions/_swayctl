@@ -1,0 +1,3 @@
+#compdef swayctl
+local -a recipes=( ${(@s/ /)$(swayctl --summary)} )
+_describe 'swayctl' recipes

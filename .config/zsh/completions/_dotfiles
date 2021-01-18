@@ -1,0 +1,3 @@
+#compdef dotfiles
+local -a recipes=( ${(@s/ /)$(dotfiles --summary)} )
+_describe 'dotfiles' recipes

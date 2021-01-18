@@ -1,0 +1,4 @@
+% rust
+
+# Install topgrade to update system packages.
+cargo install topgrade

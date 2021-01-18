@@ -1,0 +1,4 @@
+% python
+
+# install better REPL and some standard libs
+python3 -m pip install requests ptpython chalk

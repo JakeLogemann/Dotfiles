@@ -1,0 +1,37 @@
+% dotfiles
+
+# Re-link all dotfiles into the correct directory.
+dotfiles install
+
+# Prune any dangling symbolic links in the home directory.
+dotfiles prune-dangling
+
+# List any dangling symbolic links in the home directory.
+dotfiles list-dangling
+
+# List all files managed by this repository.
+dotfiles list-files
+
+# Remove a dangling symlink in the home directory.
+rm -vf <dangling_file>
+
+# Edit any file managed by this repository.
+vim -p ~/dotfiles/<managed_file>
+
+# Display current ANSI color table.
+ansi --color-table
+
+# Display ANSI color codes.
+ansi --color-codes
+
+# Launch the retro "pipes" terminal "screensaver"
+pipes.sh
+
+# Fetch & display system information via neofetch.
+neofetch
+
+# Upgrade the system using topgrade.
+topgrade -yk
+
+$ managed_file: dotfiles list-files
+$ dangling_file: dotfiles list-dangling

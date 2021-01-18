@@ -1,0 +1,3 @@
+#compdef rustctl
+local -a recipes=( ${(@s/ /)$(rustctl --summary)} )
+_describe 'rustctl' recipes

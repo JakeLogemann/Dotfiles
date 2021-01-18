@@ -1,0 +1,21 @@
+% usb,security,usbguard
+
+# Show USBGuard help
+usbguard --help
+
+# List all USB Devices
+sudo usbguard list-devices
+
+# List all USB Device Rules
+sudo usbguard list-rules
+
+# Authorize a USB Device
+sudo usbguard allow-device <id>
+
+# De-Authorize a USB Device
+sudo usbguard block-device <id>
+
+# Reject a USB Device
+sudo usbguard reject-device <id>
+
+$ id: sudo usbguard device-list | awk '{print $1}'
