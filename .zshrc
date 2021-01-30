@@ -20,8 +20,8 @@ path+=( "$HOME/.fzf/bin" "$HOME/.cargo/bin" "$HOME/.rbenv/bin" "$HOME/.rbenv/shi
 # Helper functions (for early-use)
 function has_bin(){ for var in "$@"; do which $var 2>/dev/null >&2; done; }
 function source_if_exists(){ for var in "$@"; do test ! -r "$var" || source "$var"; done; }
-function maybe_run_bin(){ if test -x "$1"; then eval "$@"; fi; }
-function maybe_eval_bin(){ if test -x "$1"; then eval "$($*)"; fi; }
+function maybe_run_bin(){ if has_bin "$1"; then eval "$@"; fi; }
+function maybe_eval_bin(){ if has_bin "$1"; then eval "$($*)"; fi; }
 function scp_to_same(){ scp -rp "$1" "$2:$1" ;}
 
 
@@ -34,9 +34,11 @@ function dotfiles::load-environment() {
 
   
   # load some environments if the applicable binaries exist.
-  maybe_eval_bin $HOME/.cargo/bin/starship init zsh
-  maybe_eval_bin $HOME/.cargo/bin/zoxide init zsh
-  maybe_eval_bin $HOME/.cargo/bin/rbenv init -
+  maybe_eval_bin starship init zsh
+  maybe_eval_bin zoxide init zsh
+  maybe_eval_bin tab --completion=zsh
+  maybe_eval_bin rbenv init -
+  maybe_eval_bin pyenv init -
 
   if [[ -n "${SSH_CONNECTION}" && "$TERM" == "alacritty" ]]; then export TERM=xterm-256color; fi
   
@@ -292,11 +294,91 @@ function dotfiles::setup-aliases(){
   ialias reload="clear && source $HOME/.zshrc"
   ialias tmux="tmux -2u"
 
-  # alias -s toml='background brave'
-  # alias -s html='background brave'
-  # alias -s {pdf,PDF}='background mupdf'
-  # alias -s {mp4,MP4,mov,MOV}='background vlc'
-  # alias -s {zip,ZIP}="unzip -l"
+  alias dmesg='sudo dmesg'
+
+  # When I copy+pasta code.. I always mean use my normal editor.
+  editors=("e" "nano" "pico" "vi" "vim" "nvim" "edit")
+  for e in $editors; do ialias $e="$EDITOR"; done
+
+  # Editing configurations easier (thus more often!)
+  ialias edit-alacritty.yml="$EDITOR $HOME/.config/alacritty/alacritty.yml"
+  ialias edit-bashrc="$EDITOR $HOME/.bashrc"
+  ialias edit-nvimrc="cd $XDG_CONFIG_DIR/nvim && nvim ."
+  ialias edit-profile="$EDITOR $HOME/.profile"
+  ialias edit-ssh-config="$EDITOR $HOME/.ssh/config"
+  ialias edit-vimrc='vim $HOME/.vimrc'
+  ialias edit-zshrc="edit $HOME/.zshrc"
+
+  ialias pacman-install='pacman -Sl | sk | cut -d\  -f2 | xargs sudo pacman -Syu --noconfirm --needed'
+
+  # Git commands
+  alias gamend='git commit --amend --no-edit'
+  alias gamendit='git commit --amend --edit'
+  alias gb='git branch'
+  alias ga='git add'
+  alias gci='git commit'
+  alias gcl='git clone'
+  alias gco='git checkout'
+  alias gd='git diff'
+  alias gl='git log --oneline'
+  alias gpl='git pull'
+  alias gps='git push'
+  alias grb='git rebase'
+  alias grem='git remote'
+  alias grm='git rm'
+  alias gs='git status -sb'
+  alias gt='git tag'
+
+  # Finding and removing cruft from projects easily.
+  alias find-broken-symlinks='find -L . -type l 2>/dev/null'
+  alias rm-broken-symlinks='find -L . -type l -exec rm -fv {} \; 2>/dev/null'
+
+  # Getting/Saving Information.
+  alias save-html='monolith -Isjf'
+  alias list-system-units='systemctl --no-pager --no-legend list-unit-files'
+  alias list-failed-system-units='systemctl --no-pager --no-legend list-unit-files'
+  ialias lsenv='env | sort | less'
+  ialias list-path='echo $PATH | tr ":" "\n" | less'
+  ialias manski="eval \$(apropos -w '*' | sk -mp 'manpages> ' | cut -d- -f1 | awk '{print \"man\",\$2,\$1,\"; \"}' | tr -d '\n()')"
+  alias covid-19='curl https://corona-stats.online | less -R'
+
+  if has_bin lsd; then
+    alias l1='lsd -1'
+    alias l='lsd'
+    alias ll='lsd -Alh --date relative --size short --no-symlink'
+    alias ls='lsd -A'
+    alias lss='lsd -Alh --date relative --size short --no-symlink --sizesort'
+    alias lst='lsd -Alh --date relative --size short --no-symlink --timesort'
+  else
+    alias l1='ls -1'
+    alias l='ls'
+    alias ll='ls -Alh'
+    alias ls='ls -A'
+    alias lss='ls -Alh'
+    alias lst='ls -Alh'
+  fi
+
+# Commands I just frequently have to type...
+alias CapsCtrl='setxkbmap -option ctrl:nocaps'
+
+# Package managers and updates.
+alias pacman='sudo pacman'
+alias upgrade-system='topgrade -yk'
+alias tmux-dir='tmux -2u new-session -ADs "$(basename $PWD)"'
+
+# System service management.
+alias select-system-service="systemctl --no-pager --no-legend list-unit-files | cut -d' ' -f1 | sk -mp 'system services> '"
+alias select-user-service="systemctl --user --no-pager --no-legend list-unit-files | cut -d' ' -f1 | sk -mp 'user services> '"
+alias systemctl-edit='sudo systemctl edit --full --force'
+
+# vim: ft=sh et sw=2 ts=2 ai noci nu nornu
+
+alias tf='terraform'
+# alias -s toml='background brave'
+# alias -s html='background brave'
+# alias -s {pdf,PDF}='background mupdf'
+# alias -s {mp4,MP4,mov,MOV}='background vlc'
+# alias -s {zip,ZIP}="unzip -l"
 }
 
 # List all defined options, in a more pretty way.
@@ -341,10 +423,14 @@ dotfiles::setup-history
 dotfiles::setup-aliases
 dotfiles::bind-keys
 
-source_if_exists "$XDG_CONFIG_DIR/sh/aliases.sh"
 source_if_exists /usr/share/skim/{key-bindings,completion}.zsh
 source_if_exists /usr/share/fzf/{key-bindings,completion}.zsh
 source_if_exists "$HOME/.fzf/shell/"{key-bindings,completion}.zsh
 source_if_exists "$HOME/.zshrc.local"
 
 # vim: ts=2 sts=2 et noai noci
+
+# tab multiplexer configuration: https://github.com/austinjones/tab-rs/
+source "/home/jlogemann/.local/share/tab/completion/zsh-history.zsh"
+# end tab configuration
+
