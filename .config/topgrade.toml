@@ -1,9 +1,9 @@
 # Git repositories to pull
 predefined_git_repos = false
-git_repos = ["~/Projects/crates/tauri/", "~/dotfiles" ]
+git_repos = ["~/dotfiles" , "~/terraform", "~/.config/nvim" ]
 
 # Disable specific steps - same options as the command line flag
-disable = ["emacs","go","flatpak","tmux"]
+disable = ["neovim", "emacs","go","flatpak"]
 
 # Run specific steps - same options as the command line flag
 #only = ["system", "emacs"]
@@ -11,8 +11,10 @@ disable = ["emacs","go","flatpak","tmux"]
 # Do not ask to retry failed steps (default: false)
 no_retry = true
 
+notify_each_step = true
+
 # Run inside tmux
-run_in_tmux = false
+run_in_tmux = true
 
 # List of remote machines with Topgrade installed on them
 #remote_topgrades = ["toothless", "pi", "parnas"]
@@ -31,13 +33,14 @@ git_arguments = "--rebase --autostash --ff-only"
 
 set_title = true
 
+# Cleanup temporary or old files
+cleanup = true
+
 # Commands to run before anything
 #[pre_commands]
 #"Emacs Snapshot" = "rm -rf ~/.emacs.d/elpa.bak && cp -rl ~/.emacs.d/elpa ~/.emacs.d/elpa.bak"
 
 # Custom commands
-#[commands]
-#"Python Environment" = "~/dev/.env/bin/pip install -i https://pypi.python.org/simple -U --upgrade-strategy eager jupyter"
-
-# Cleanup temporary or old files
-cleanup = true
+[commands]
+"Cleanup Downloads" = "rm -vrf ~/Downloads/*"
+"Prune Dangling Symlinks" = find -L ~/ -type l -exec rm -fv {} \; 2>/dev/null
