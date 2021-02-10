@@ -87,8 +87,6 @@ function dotfiles::bind-keys(){
   autoload -U select-word-style 
   autoload -U edit-command-line  && zle -N edit-command-line
   autoload -U up-line-or-beginning-search && zle -N up-line-or-beginning-search
-  autoload -U end-of-line && zle -N end-of-line
-  autoload -U begining-of-line && zle -N begining-of-line
   autoload -U down-line-or-beginning-search && zle -N down-line-or-beginning-search
   zle -N dotfiles::run-navi
   zle -N dotfiles::skim-files-in-directory
@@ -208,7 +206,7 @@ function dotfiles::bind-keys(){
   bindkey '\C-w'         backward-kill-word
   bindkey '^[h'          run-help
   bindkey '\C-b'         backward-word
-  bindkey '\C-a'         begining-of-line
+  bindkey '\C-a'         beginning-of-line
   bindkey '\C-e'         end-of-line
   bindkey '\C-f'         forward-word
   bindkey '\C-l'         forward-word

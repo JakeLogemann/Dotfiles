@@ -3,7 +3,7 @@ predefined_git_repos = false
 git_repos = ["~/dotfiles" , "~/terraform", "~/.config/nvim" ]
 
 # Disable specific steps - same options as the command line flag
-disable = ["neovim", "emacs","go","flatpak"]
+disable = ["vim", "emacs","go","flatpak"]
 
 # Run specific steps - same options as the command line flag
 #only = ["system", "emacs"]
@@ -43,4 +43,4 @@ cleanup = true
 # Custom commands
 [commands]
 "Cleanup Downloads" = "rm -vrf ~/Downloads/*"
-"Prune Dangling Symlinks" = find -L ~/ -type l -exec rm -fv {} \; 2>/dev/null
+# "Prune Dangling Symlinks" = "find -L ~/ -type l -exec rm -fv {} \\; 2>/dev/null"
