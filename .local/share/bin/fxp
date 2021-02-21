@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use 5.10.0;
+
+# fxp -- file transfer with progress
+print STDERR "\n\n";
+say STDERR join(" ", "fxp: rsync -avP", @ARGV);
+print STDERR "\n\n";
+
+# if STDOUT is NOT a terminal, we simply call rsync and get out of the way.
+exec("rsync", "-avP", @ARGV) unless -t 1;
+
+# otherwise, run the same rsync, but massage the output of so you can get
+# non-scrolling progress!
+
+$|++;
+my $el   = `tput el`;   chomp $el;      # clear to end-of-line
+my $cuu1 = `tput cuu1`; chomp $cuu1;    # cursor up one line
+my $cols = `tput cols`; chomp $cols;    # number of columns in this screen
+
+open( RSYNC, "-|", "rsync", "-avP", @ARGV );
+
+my $buf = '';
+my ( $rc, $fn, $xfr, $prog, $stats ) = ('') x 5;
+
+# no amount of cajoling will make perl accept both \r AND \n as "$/", so I had to resort to sysread!
+while ( $rc = sysread( RSYNC, $buf, 1, length($buf) ) ) {
+    next unless $buf =~ s/[\r\n]$//;
+
+    # for troubleshooting; bypasses all the munging and just prints almost-raw
+    # (i.e., raw except for \r -> \n)
+    if ( $ENV{D} ) {
+        print STDERR "$buf\n";
+        $buf = '';
+        next;
+    }
+
+    if ( $buf =~ /\((xfr#.*)\)/ ) {
+        $xfr = $1;
+        print STDERR "$el$xfr\t$prog\r";
+    } elsif ( $buf =~ /\d+%/ ) {
+        $prog = $buf;
+        print STDERR "$el$xfr\t$prog\r";
+    } elsif ( $buf =~ /^(sent|total) / ) {
+        print STDERR "\n$buf";
+    } elsif ( $buf =~ /\S/ ) {
+        # it's a filename!
+        substr( $buf, 0, length($buf) - $cols + 4, "..." ) if length($buf) >= $cols;
+        print STDERR "$cuu1$buf$el\n";
+    }
+    # empty lines ignored
+
+    $buf = '';
+}
+
+print STDERR "\n";

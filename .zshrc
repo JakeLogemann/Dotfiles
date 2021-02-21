@@ -214,66 +214,61 @@ function dotfiles::bind-keys(){
   bindkey -M isearch " " magic-space
 }
 
-function dotfiles::setup-completion(){
-  autoload -Uz compinit bashcompinit && compinit && bashcompinit
+autoload -Uz compinit bashcompinit && compinit && bashcompinit
 
-  zstyle ':completion:*'                cache-path        "$zsh_dir/completion.cache"
-  zstyle ':completion:*'                completer         _complete _match _approximate _expand_alias
-  zstyle ':completion:*'                file-list         list=20 insert=10
-  zstyle ':completion:*'                squeeze-slashes   true
-  zstyle ':completion:*'                use-cache         on
-  zstyle ':completion:*:*:kill:*'       menu              yes select
-  zstyle ':completion:*:(all-|)files'   ignored-patterns  '(|*/)CVS'
-  zstyle ':completion:*:default'        list-dirs-first   true
-  zstyle ':completion:*:approximate:*'  max-errors        1 numeric
-  zstyle ':completion:*:cd:*'           ignore-parents    parent pwd
-  zstyle ':completion:*:cd:*'           ignored-patterns  '(*/)#CVS'
-  zstyle ':completion:*:functions'      ignored-patterns  '_*'
-  zstyle ':completion:*:kill:*'         force-list        always
-  zstyle ':completion:*:match:*'        original          only
-  zstyle ':completion:*:rm:*'           file-patterns     '*.log:log-files' '%p:all-files'
+zstyle ':completion:*'                cache-path        "$zsh_dir/completion.cache"
+zstyle ':completion:*'                completer         _complete _match _approximate _expand_alias
+zstyle ':completion:*'                file-list         list=20 insert=10
+zstyle ':completion:*'                squeeze-slashes   true
+zstyle ':completion:*'                use-cache         on
+zstyle ':completion:*:*:kill:*'       menu              yes select
+zstyle ':completion:*:(all-|)files'   ignored-patterns  '(|*/)CVS'
+zstyle ':completion:*:default'        list-dirs-first   true
+zstyle ':completion:*:approximate:*'  max-errors        1 numeric
+zstyle ':completion:*:cd:*'           ignore-parents    parent pwd
+zstyle ':completion:*:cd:*'           ignored-patterns  '(*/)#CVS'
+zstyle ':completion:*:functions'      ignored-patterns  '_*'
+zstyle ':completion:*:kill:*'         force-list        always
+zstyle ':completion:*:match:*'        original          only
+zstyle ':completion:*:rm:*'           file-patterns     '*.log:log-files' '%p:all-files'
 
-  setopt cbases cprecedences
-  setopt autocd autopushd pushdsilent pushdignoredups pushdtohome
-  setopt cdablevars interactivecomments printexitvalue shortloops
-  setopt localloops localoptions localpatterns
-  setopt pipefail vi evallineno
+setopt cbases cprecedences
+setopt autocd autopushd pushdsilent pushdignoredups pushdtohome
+setopt cdablevars interactivecomments printexitvalue shortloops
+setopt localloops localoptions localpatterns
+setopt pipefail vi evallineno
 
+# Autocompletion
+setopt hashdirs hashcmds 
+setopt aliases 
+setopt automenu 
+setopt autoparamslash 
+setopt autoremoveslash 
+setopt completealiases 
+setopt promptbang promptcr promptsp promptpercent promptsubst transientrprompt 
+setopt listambiguous 
+setopt listpacked 
+setopt listrowsfirst 
+setopt autolist 
+setopt markdirs
 
-  # Autocompletion
-  setopt hashdirs hashcmds 
-  setopt aliases 
-  setopt automenu 
-  setopt autoparamslash 
-  setopt autoremoveslash 
-  setopt completealiases 
-  setopt promptbang promptcr promptsp promptpercent promptsubst transientrprompt 
-  setopt listambiguous 
-  setopt listpacked 
-  setopt listrowsfirst 
-  setopt autolist 
-  setopt markdirs
-}
+setopt banghist 
+setopt histbeep 
+setopt inc_append_history
+setopt histexpiredupsfirst 
+setopt histignorealldups 
+setopt histnostore 
+setopt histfcntllock 
+setopt histfindnodups 
+setopt histreduceblanks 
+setopt histsavebycopy 
+setopt histverify 
+setopt sharehistory
 
-function dotfiles::setup-history(){
-  setopt banghist 
-  setopt histbeep 
-  setopt inc_append_history
-  setopt histexpiredupsfirst 
-  setopt histignorealldups 
-  setopt histnostore 
-  setopt histfcntllock 
-  setopt histfindnodups 
-  setopt histreduceblanks 
-  setopt histsavebycopy 
-  setopt histverify 
-  setopt sharehistory
-
-  # Shell History
-  HISTFILE="$HOME/.zhistory" 
-  SAVEHIST=50000  # Total lines to save in zsh history.
-  HISTSIZE=1000   # Lines of history to save to save from the current session.
-}
+# Shell History
+HISTFILE="$HOME/.zhistory" 
+SAVEHIST=50000  # Total lines to save in zsh history.
+HISTSIZE=1000   # Lines of history to save to save from the current session.
 
 function dotfiles::default-options(){
   unsetopt correct correctall flowcontrol 
@@ -341,19 +336,19 @@ function dotfiles::setup-aliases(){
   alias covid-19='curl https://corona-stats.online | less -R'
 
   if has_bin lsd; then
-    alias l1='lsd -1'
-    alias l='lsd'
-    alias ll='lsd -Alh --date relative --size short --no-symlink'
-    alias ls='lsd -A'
-    alias lss='lsd -Alh --date relative --size short --no-symlink --sizesort'
-    alias lst='lsd -Alh --date relative --size short --no-symlink --timesort'
+    ialias l1='lsd -1'
+    ialias l='lsd'
+    ialias ll='lsd -Alh --date relative --size short --no-symlink'
+    ialias ls='lsd -A'
+    ialias lss='lsd -Alh --date relative --size short --no-symlink --sizesort'
+    ialias lst='lsd -Alh --date relative --size short --no-symlink --timesort'
   else
-    alias l1='ls -1'
-    alias l='ls'
-    alias ll='ls -Alh'
-    alias ls='ls -A'
-    alias lss='ls -Alh'
-    alias lst='ls -Alh'
+    ialias l1='ls -1'
+    ialias l='ls'
+    ialias ll='ls -Alh'
+    ialias ls='ls -A'
+    ialias lss='ls -Alh'
+    ialias lst='ls -Alh'
   fi
 
 # Commands I just frequently have to type...
