@@ -270,14 +270,12 @@ HISTFILE="$HOME/.zhistory"
 SAVEHIST=50000  # Total lines to save in zsh history.
 HISTSIZE=1000   # Lines of history to save to save from the current session.
 
-function dotfiles::default-options(){
-  unsetopt correct correctall flowcontrol 
+unsetopt correct correctall flowcontrol 
 
-  # Job Control
-  unsetopt  flowcontrol   #Disable ^S & ^Q.
-  setopt autocontinue autoresume bgnice checkjobs notify longlistjobs
-  setopt checkrunningjobs 
-}
+# Job Control
+unsetopt  flowcontrol   #Disable ^S & ^Q.
+setopt autocontinue autoresume bgnice checkjobs notify longlistjobs
+setopt checkrunningjobs 
 
 function dotfiles::setup-aliases(){
   hash -d ".nvim"="$HOME/.config/nvim"
@@ -410,9 +408,6 @@ function expand-alias-space() {
 }
 
 dotfiles::load-environment
-dotfiles::default-options
-dotfiles::setup-completion
-dotfiles::setup-history
 dotfiles::setup-aliases
 dotfiles::bind-keys
 
