@@ -20,8 +20,8 @@ path+=( "$HOME/.fzf/bin" "$HOME/.cargo/bin" "$HOME/.rbenv/bin" "$HOME/.rbenv/shi
 # Helper functions (for early-use)
 function has_bin(){ for var in "$@"; do which $var 2>/dev/null >&2; done; }
 function source_if_exists(){ for var in "$@"; do test ! -r "$var" || source "$var"; done; }
-function maybe_run_bin(){ if test -x "$1"; then eval "$@"; fi; }
-function maybe_eval_bin(){ if test -x "$1"; then eval "$($*)"; fi; }
+function maybe_run_bin(){ if has_bin "$1"; then eval "$@"; fi; }
+function maybe_eval_bin(){ if has_bin "$1"; then eval "$($*)"; fi; }
 function scp_to_same(){ scp -rp "$1" "$2:$1" ;}
 
 
@@ -37,7 +37,8 @@ function dotfiles::load-environment() {
   maybe_eval_bin $HOME/.cargo/bin/starship init zsh
   maybe_eval_bin $HOME/.cargo/bin/zoxide init zsh
   maybe_eval_bin direnv hook zsh
-  maybe_eval_bin $HOME/.cargo/bin/rbenv init -
+  maybe_eval_bin rbenv init -
+  maybe_eval_bin pyenv init -
 
   if [[ -n "${SSH_CONNECTION}" && "$TERM" == "alacritty" ]]; then export TERM=xterm-256color; fi
   
@@ -86,8 +87,6 @@ function dotfiles::bind-keys(){
   autoload -U select-word-style 
   autoload -U edit-command-line  && zle -N edit-command-line
   autoload -U up-line-or-beginning-search && zle -N up-line-or-beginning-search
-  autoload -U end-of-line && zle -N end-of-line
-  autoload -U begining-of-line && zle -N begining-of-line
   autoload -U down-line-or-beginning-search && zle -N down-line-or-beginning-search
   zle -N dotfiles::run-navi
   zle -N dotfiles::skim-files-in-directory
@@ -207,7 +206,7 @@ function dotfiles::bind-keys(){
   bindkey '\C-w'         backward-kill-word
   bindkey '^[h'          run-help
   bindkey '\C-b'         backward-word
-  bindkey '\C-a'         begining-of-line
+  bindkey '\C-a'         beginning-of-line
   bindkey '\C-e'         end-of-line
   bindkey '\C-f'         forward-word
   bindkey '\C-l'         forward-word
@@ -215,75 +214,68 @@ function dotfiles::bind-keys(){
   bindkey -M isearch " " magic-space
 }
 
-function dotfiles::setup-completion(){
-  autoload -Uz compinit bashcompinit && compinit && bashcompinit
+autoload -Uz compinit bashcompinit && compinit && bashcompinit
 
-  zstyle ':completion:*'                cache-path        "$zsh_dir/completion.cache"
-  zstyle ':completion:*'                completer         _complete _match _approximate _expand_alias
-  zstyle ':completion:*'                file-list         list=20 insert=10
-  zstyle ':completion:*'                squeeze-slashes   true
-  zstyle ':completion:*'                use-cache         on
-  zstyle ':completion:*:*:kill:*'       menu              yes select
-  zstyle ':completion:*:(all-|)files'   ignored-patterns  '(|*/)CVS'
-  zstyle ':completion:*:default'        list-dirs-first   true
-  zstyle ':completion:*:approximate:*'  max-errors        1 numeric
-  zstyle ':completion:*:cd:*'           ignore-parents    parent pwd
-  zstyle ':completion:*:cd:*'           ignored-patterns  '(*/)#CVS'
-  zstyle ':completion:*:functions'      ignored-patterns  '_*'
-  zstyle ':completion:*:kill:*'         force-list        always
-  zstyle ':completion:*:match:*'        original          only
-  zstyle ':completion:*:rm:*'           file-patterns     '*.log:log-files' '%p:all-files'
+zstyle ':completion:*'                cache-path        "$zsh_dir/completion.cache"
+zstyle ':completion:*'                completer         _complete _match _approximate _expand_alias
+zstyle ':completion:*'                file-list         list=20 insert=10
+zstyle ':completion:*'                squeeze-slashes   true
+zstyle ':completion:*'                use-cache         on
+zstyle ':completion:*:*:kill:*'       menu              yes select
+zstyle ':completion:*:(all-|)files'   ignored-patterns  '(|*/)CVS'
+zstyle ':completion:*:default'        list-dirs-first   true
+zstyle ':completion:*:approximate:*'  max-errors        1 numeric
+zstyle ':completion:*:cd:*'           ignore-parents    parent pwd
+zstyle ':completion:*:cd:*'           ignored-patterns  '(*/)#CVS'
+zstyle ':completion:*:functions'      ignored-patterns  '_*'
+zstyle ':completion:*:kill:*'         force-list        always
+zstyle ':completion:*:match:*'        original          only
+zstyle ':completion:*:rm:*'           file-patterns     '*.log:log-files' '%p:all-files'
 
-  setopt cbases cprecedences
-  setopt autocd autopushd pushdsilent pushdignoredups pushdtohome
-  setopt cdablevars interactivecomments printexitvalue shortloops
-  setopt localloops localoptions localpatterns
-  setopt pipefail vi evallineno
+setopt cbases cprecedences
+setopt autocd autopushd pushdsilent pushdignoredups pushdtohome
+setopt cdablevars interactivecomments printexitvalue shortloops
+setopt localloops localoptions localpatterns
+setopt pipefail vi evallineno
 
+# Autocompletion
+setopt hashdirs hashcmds 
+setopt aliases 
+setopt automenu 
+setopt autoparamslash 
+setopt autoremoveslash 
+setopt completealiases 
+setopt promptbang promptcr promptsp promptpercent promptsubst transientrprompt 
+setopt listambiguous 
+setopt listpacked 
+setopt listrowsfirst 
+setopt autolist 
+setopt markdirs
 
-  # Autocompletion
-  setopt hashdirs hashcmds 
-  setopt aliases 
-  setopt automenu 
-  setopt autoparamslash 
-  setopt autoremoveslash 
-  setopt completealiases 
-  setopt promptbang promptcr promptsp promptpercent promptsubst transientrprompt 
-  setopt listambiguous 
-  setopt listpacked 
-  setopt listrowsfirst 
-  setopt autolist 
-  setopt markdirs
-}
+setopt banghist 
+setopt histbeep 
+setopt inc_append_history
+setopt histexpiredupsfirst 
+setopt histignorealldups 
+setopt histnostore 
+setopt histfcntllock 
+setopt histfindnodups 
+setopt histreduceblanks 
+setopt histsavebycopy 
+setopt histverify 
+setopt sharehistory
 
-function dotfiles::setup-history(){
-  setopt banghist 
-  setopt histbeep 
-  setopt inc_append_history
-  setopt histexpiredupsfirst 
-  setopt histignorealldups 
-  setopt histnostore 
-  setopt histfcntllock 
-  setopt histfindnodups 
-  setopt histreduceblanks 
-  setopt histsavebycopy 
-  setopt histverify 
-  setopt sharehistory
+# Shell History
+HISTFILE="$HOME/.zhistory" 
+SAVEHIST=50000  # Total lines to save in zsh history.
+HISTSIZE=1000   # Lines of history to save to save from the current session.
 
-  # Shell History
-  HISTFILE="$HOME/.zhistory" 
-  SAVEHIST=50000  # Total lines to save in zsh history.
-  HISTSIZE=1000   # Lines of history to save to save from the current session.
-}
+unsetopt correct correctall flowcontrol 
 
-function dotfiles::default-options(){
-  unsetopt correct correctall flowcontrol 
-
-  # Job Control
-  unsetopt  flowcontrol   #Disable ^S & ^Q.
-  setopt autocontinue autoresume bgnice checkjobs notify longlistjobs
-  setopt checkrunningjobs 
-}
+# Job Control
+unsetopt  flowcontrol   #Disable ^S & ^Q.
+setopt autocontinue autoresume bgnice checkjobs notify longlistjobs
+setopt checkrunningjobs 
 
 function dotfiles::setup-aliases(){
   hash -d ".nvim"="$HOME/.config/nvim"
@@ -299,6 +291,88 @@ function dotfiles::setup-aliases(){
   # alias -s {pdf,PDF}='background mupdf'
   # alias -s {mp4,MP4,mov,MOV}='background vlc'
   # alias -s {zip,ZIP}="unzip -l"
+  alias dmesg='sudo dmesg'
+
+  # When I copy+pasta code.. I always mean use my normal editor.
+  editors=("e" "nano" "pico" "vi" "vim" "nvim" "edit")
+  for e in $editors; do ialias $e="$EDITOR"; done
+
+  # Editing configurations easier (thus more often!)
+  ialias edit-alacritty.yml="$EDITOR $HOME/.config/alacritty/alacritty.yml"
+  ialias edit-bashrc="$EDITOR $HOME/.bashrc"
+  ialias edit-nvimrc="cd $XDG_CONFIG_DIR/nvim && nvim ."
+  ialias edit-profile="$EDITOR $HOME/.profile"
+  ialias edit-ssh-config="$EDITOR $HOME/.ssh/config"
+  ialias edit-vimrc='vim $HOME/.vimrc'
+  ialias edit-zshrc="edit $HOME/.zshrc"
+
+  ialias pacman-install='pacman -Sl | sk | cut -d\  -f2 | xargs sudo pacman -Syu --noconfirm --needed'
+
+  # Git commands
+  alias gamend='git commit --amend --no-edit'
+  alias gamendit='git commit --amend --edit'
+  alias gb='git branch'
+  alias ga='git add'
+  alias gci='git commit'
+  alias gcl='git clone'
+  alias gco='git checkout'
+  alias gd='git diff'
+  alias gl='git log --oneline'
+  alias gpl='git pull'
+  alias gps='git push'
+  alias grb='git rebase'
+  alias grem='git remote'
+  alias grm='git rm'
+  alias gs='git status -sb'
+  alias gt='git tag'
+
+  # Finding and removing cruft from projects easily.
+  alias find-broken-symlinks='find -L . -type l 2>/dev/null'
+  alias rm-broken-symlinks='find -L . -type l -exec rm -fv {} \; 2>/dev/null'
+
+  # Getting/Saving Information.
+  alias save-html='monolith -Isjf'
+  alias list-system-units='systemctl --no-pager --no-legend list-unit-files'
+  alias list-failed-system-units='systemctl --no-pager --no-legend list-unit-files'
+  ialias lsenv='env | sort | less'
+  ialias list-path='echo $PATH | tr ":" "\n" | less'
+  ialias manski="eval \$(apropos -w '*' | sk -mp 'manpages> ' | cut -d- -f1 | awk '{print \"man\",\$2,\$1,\"; \"}' | tr -d '\n()')"
+  alias covid-19='curl https://corona-stats.online | less -R'
+
+  if has_bin lsd; then
+    ialias l1='lsd -1'
+    ialias l='lsd'
+    ialias ll='lsd -Alh --date relative --size short --no-symlink'
+    ialias ls='lsd -A'
+    ialias lss='lsd -Alh --date relative --size short --no-symlink --sizesort'
+    ialias lst='lsd -Alh --date relative --size short --no-symlink --timesort'
+  else
+    ialias l1='ls -1'
+    ialias l='ls'
+    ialias ll='ls -Alh'
+    ialias ls='ls -A'
+    ialias lss='ls -Alh'
+    ialias lst='ls -Alh'
+  fi
+
+# Commands I just frequently have to type...
+alias CapsCtrl='setxkbmap -option ctrl:nocaps'
+
+# Package managers and updates.
+alias pacman='sudo pacman'
+alias upgrade-system='topgrade -yk'
+alias tmux-dir='tmux -2u new-session -ADs "$(basename $PWD)"'
+
+# System service management.
+alias select-system-service="systemctl --no-pager --no-legend list-unit-files | cut -d' ' -f1 | sk -mp 'system services> '"
+alias select-user-service="systemctl --user --no-pager --no-legend list-unit-files | cut -d' ' -f1 | sk -mp 'user services> '"
+alias systemctl-edit='sudo systemctl edit --full --force'
+
+# alias -s toml='background brave'
+# alias -s html='background brave'
+# alias -s {pdf,PDF}='background mupdf'
+# alias -s {mp4,MP4,mov,MOV}='background vlc'
+# alias -s {zip,ZIP}="unzip -l"
 }
 
 # List all defined options, in a more pretty way.
@@ -337,16 +411,17 @@ function expand-alias-space() {
 }
 
 dotfiles::load-environment
-dotfiles::default-options
-dotfiles::setup-completion
-dotfiles::setup-history
 dotfiles::setup-aliases
 dotfiles::bind-keys
 
-source_if_exists "$XDG_CONFIG_DIR/sh/aliases.sh"
 source_if_exists /usr/share/skim/{key-bindings,completion}.zsh
 source_if_exists /usr/share/doc/fzf/examples/{key-bindings,completion}.zsh
 source_if_exists "$HOME/.fzf/shell/"{key-bindings,completion}.zsh
 source_if_exists "$HOME/.zshrc.local"
 
 # vim: ts=2 sts=2 et noai noci
+
+# tab multiplexer configuration: https://github.com/austinjones/tab-rs/
+source "/home/jlogemann/.local/share/tab/completion/zsh-history.zsh"
+# end tab configuration
+
