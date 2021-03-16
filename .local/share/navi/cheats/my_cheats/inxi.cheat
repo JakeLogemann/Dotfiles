@@ -1,0 +1,34 @@
+% inxi, device
+
+# show linux system information
+inxi
+
+# show kernel and distribution
+inxi -S
+
+# show device model information
+inxi -M
+
+# show cpu information
+inxi -C
+
+# show gpu information
+inxi -G
+
+# show audio information
+inxi -A
+
+# show networking information
+inxi -Nni
+
+# show disk information
+inxi -D
+
+# show disk partion information
+inxi -P
+
+# show system information summary
+inxi -b
+
+# show system repository information
+inxi -r

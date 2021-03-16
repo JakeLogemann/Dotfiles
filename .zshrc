@@ -36,6 +36,7 @@ function dotfiles::load-environment() {
   # load some environments if the applicable binaries exist.
   maybe_eval_bin $HOME/.cargo/bin/starship init zsh
   maybe_eval_bin $HOME/.cargo/bin/zoxide init zsh
+  maybe_eval_bin direnv hook zsh
   maybe_eval_bin $HOME/.cargo/bin/rbenv init -
 
   if [[ -n "${SSH_CONNECTION}" && "$TERM" == "alacritty" ]]; then export TERM=xterm-256color; fi
@@ -292,6 +293,7 @@ function dotfiles::setup-aliases(){
   ialias reload="clear && source $HOME/.zshrc"
   ialias tmux="tmux -2u"
 
+  alias tf='terraform'
   # alias -s toml='background brave'
   # alias -s html='background brave'
   # alias -s {pdf,PDF}='background mupdf'
@@ -343,7 +345,7 @@ dotfiles::bind-keys
 
 source_if_exists "$XDG_CONFIG_DIR/sh/aliases.sh"
 source_if_exists /usr/share/skim/{key-bindings,completion}.zsh
-source_if_exists /usr/share/fzf/{key-bindings,completion}.zsh
+source_if_exists /usr/share/doc/fzf/examples/{key-bindings,completion}.zsh
 source_if_exists "$HOME/.fzf/shell/"{key-bindings,completion}.zsh
 source_if_exists "$HOME/.zshrc.local"
 

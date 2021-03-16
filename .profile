@@ -48,6 +48,7 @@ optional_export_path "$HOME/.yarn/bin"
 optional_export_path "$HOME/.rbenv/bin"
 optional_export_path "$HOME/.npm/bin"
 optional_export_path "$HOME/go/bin"
+optional_export_path "/usr/local/go/bin"
 optional_export_path "$XDG_CONFIG_DIR/nvim/plug/fzf/bin"
 
 # if [ -n "$SSH_TTY" -a -z "$TMUX" ]; then
