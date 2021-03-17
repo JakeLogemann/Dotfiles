@@ -420,8 +420,3 @@ source_if_exists "$HOME/.fzf/shell/"{key-bindings,completion}.zsh
 source_if_exists "$HOME/.zshrc.local"
 
 # vim: ts=2 sts=2 et noai noci
-
-# tab multiplexer configuration: https://github.com/austinjones/tab-rs/
-source "/home/jlogemann/.local/share/tab/completion/zsh-history.zsh"
-# end tab configuration
-
