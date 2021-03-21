@@ -14,7 +14,7 @@
 
 [[ -n "$zsh_dir" ]] || readonly zsh_dir="$XDG_CONFIG_DIR/zsh"
 fpath=( "$zsh_dir/completions" "$zsh_dir/functions" $fpath )
-path+=( "$HOME/.fzf/bin" "$HOME/.cargo/bin" "$HOME/.rbenv/bin" "$HOME/.rbenv/shims")
+path+=( "$HOME/.fzf/bin" "$HOME/.cargo/bin" "$HOME/.rbenv/bin" "$HOME/.rbenv/shims" "/usr/local/bin")
 
 
 # Helper functions (for early-use)
@@ -35,7 +35,7 @@ function dotfiles::load-environment() {
   
   # load some environments if the applicable binaries exist.
   maybe_eval_bin $HOME/.cargo/bin/starship init zsh
-  maybe_eval_bin $HOME/.cargo/bin/zoxide init zsh
+  maybe_eval_bin $HOME/.cargo/bin/zoxide init --cmd="goto" zsh
   maybe_eval_bin direnv hook zsh
   maybe_eval_bin rbenv init -
   maybe_eval_bin pyenv init -
@@ -294,7 +294,7 @@ function dotfiles::setup-aliases(){
   alias dmesg='sudo dmesg'
 
   # When I copy+pasta code.. I always mean use my normal editor.
-  editors=("e" "nano" "pico" "vi" "vim" "nvim" "edit")
+  editors=("e" "nano" "pico" "vi" "edit")
   for e in $editors; do ialias $e="$EDITOR"; done
 
   # Editing configurations easier (thus more often!)
