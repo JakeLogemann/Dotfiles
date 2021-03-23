@@ -1,6 +1,91 @@
 " Jake's Vim Config
 let $VIM_DIR=expand('~/.vim')
 
+"" Functions {{{1
+function! TrimWhitespace() "{{{
+  :%s/\s\+$//e
+endfunction "}}}
+function! MenuExplOpen() "{{{
+  if @% == "" | 20vsp .
+  else | exe "20vsp " . s:FnameEscape(expand("%:p:h"))
+  endif
+endfunction "}}}
+function! FoldText() "{{{
+    " for now, just don't try if version isn't 7 or higher
+    if v:version < 701 | return foldtext() | endif
+    " clear fold from fillchars to set it up the way we want later
+    let &l:fillchars = substitute(&l:fillchars,',\?fold:.','','gi')
+    let l:numwidth = (v:version < 701 ? 8 : &numberwidth)
+    if &fdm=='diff'
+      let l:linetext=''
+      let l:foldtext='---------- '.(v:foldend-v:foldstart+1).' lines the same ----------'
+      let l:align = winwidth(0)-&foldcolumn-(&nu ? Max(strlen(line('$'))+1, l:numwidth) : 0)
+      let l:align = (l:align / 2) + (strlen(l:foldtext)/2)
+      " note trailing space on next line
+      setlocal fillchars+=fold:\
+    elseif !exists('b:foldpat') || b:foldpat==0
+      let l:foldtext = '|'.(v:foldend-v:foldstart).' lines|'
+      let l:endofline = (&textwidth>0 ? &textwidth : 80)
+      let l:linetext = strpart(getline(v:foldstart),0,l:endofline-strlen(l:foldtext))
+      let l:linetext = substitute(l:linetext, '\{\{\{','')
+      let l:align = l:endofline-strlen(l:linetext)
+      setlocal fillchars+=fold:\
+    elseif b:foldpat==1
+      let l:align = winwidth(0)-&foldcolumn-(&nu ? Max(strlen(line('$'))+1, l:numwidth) : 0)
+      let l:foldtext = ' '.v:folddashes
+      let l:linetext = substitute(getline(v:foldstart),'\s\+$','','')
+      let l:linetext .= ' ---'.(v:foldend-v:foldstart-1).' lines--- '
+      let l:linetext .= substitute(getline(v:foldend),'^\s\+','','')
+      let l:linetext = strpart(l:linetext,0,l:align-strlen(l:foldtext))
+      let l:align -= strlen(l:linetext)
+      setlocal fillchars+=fold:\
+    endif
+    return printf('%s%*s', l:linetext, l:align, l:foldtext)
+endfunction "}}}
+function! SetupWrapping() "{{{
+  set wrap wm=2 tw=79
+endfunction "}}}
+function! SmartClose(kind) "{{{
+  if kind == 'buffer'
+    if winheight(2) < 0 && tabpagewinnr(2) == 0
+      confirm enew
+    else
+      confirm close
+    endif
+  elseif kind == 'tab'
+    confirm tabclose
+  endif
+endfunction "}}}
+function! IsEphemeral(buf) "{{{
+  let l:is_ephemeral_ft = index([
+        \ 'nerdtree',
+        \ 'ale-fix-suggest', 'ale-preview', 'ale-preview-selection',
+        \ 'gitcommit', 'gitrebase',
+        \ 'tagbar',
+        \ ], &ft)
+  return l:is_ephemeral_ft
+endfunction "}}}
+function! SmartOpen(path) "{{{
+  " not implemented, should be a 'run-or-raise'-type thing.
+  tabedit expand(a:path)
+endfunction "}}}
+" AutoMkdir() {{{
+" automatically creates a directory for current buffer
+function! AutoMkdir()
+  let dir = expand('%:p:h')
+  if dir =~ '://' | return | endif
+  if !isdirectory(dir)
+    call mkdir(dir, 'p')
+    echo 'Created directory: '.dir
+  endif
+endfunction "}}}
+" RememberCursorPosition()  {{{
+" saves the cursor position (usually before exit)
+function! RememberCursorPosition()
+  if line("'\"") > 1 && line("'\"") <= line("$")
+    exe "normal! g`\""
+  endif
+endfunction "}}}
 " Plugins: Initialize vim-plug; install if neccesary {{{1
 let g:plug_src_path = expand($VIM_DIR.'/autoload/plug.vim')
 let g:plug_install_dir = expand('~/.vim/plugs')
@@ -24,36 +109,31 @@ endif
 call plug#begin(g:plug_install_dir)
 
 " Plugins List {{{1
+
 Plug 'Raimondi/delimitMate'
+Plug 'Shougo/vimproc.vim', {'do': g:make}
+Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 Plug 'Yggdroot/indentLine'
 Plug 'airblade/vim-gitgutter'
 Plug 'dense-analysis/ale'
-Plug 'editor-bootstrap/vim-bootstrap-updater'
-Plug 'jistr/vim-nerdtree-tabs'
+Plug 'junegunn/fzf.vim' | Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/vim-easy-align'
+Plug 'junegunn/vim-peekaboo'
 Plug 'majutsushi/tagbar'
-Plug 'vimwiki/vimwiki'
+Plug 'mhinz/vim-startify'
 Plug 'scrooloose/nerdtree'
 Plug 'tomasiser/vim-code-dark'
 Plug 'tpope/vim-commentary'
-Plug 'tpope/vim-fugitive'
-Plug 'tpope/vim-rhubarb' " required by fugitive to :Gbrowse
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+Plug 'tpope/vim-eunuch'
+Plug 'tpope/vim-fugitive' | Plug 'tpope/vim-rhubarb' " required by fugitive to :Gbrowse
+Plug 'tpope/vim-projectionist'
+Plug 'valloric/youcompleteme', { 'do': './install.py  --go-completer --ts-completer --rust-completer' }
+Plug 'vim-airline/vim-airline' | Plug 'vim-airline/vim-airline-themes'
 Plug 'vim-scripts/CSApprox'
 Plug 'vim-scripts/grep.vim'
+Plug 'vimwiki/vimwiki'
+Plug 'xolox/vim-session' | Plug 'xolox/vim-misc'
 
-Plug 'valloric/youcompleteme', { 'do': './install.py  --go-completer --ts-completer --rust-completer' }
-
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-Plug 'junegunn/fzf.vim'
-
-Plug 'Shougo/vimproc.vim', {'do': g:make}
-" session management
-Plug 'xolox/vim-misc'
-Plug 'xolox/vim-session'
-" snippets
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
 " go
 Plug 'fatih/vim-go', {'do': ':GoInstallBinaries'}
 " html/css
@@ -61,14 +141,13 @@ Plug 'hail2u/vim-css3-syntax'
 Plug 'gko/vim-coloresque'
 Plug 'tpope/vim-haml', {'for':'haml'}
 Plug 'mattn/emmet-vim'
-" javascript
-Plug 'jelera/vim-javascript-syntax'
 " python
-Plug 'davidhalter/jedi-vim'
+Plug 'davidhalter/jedi-vim', {'for':'python'}
 Plug 'raimon49/requirements.txt.vim', {'for': 'requirements'}
-" typescript
-Plug 'leafgarland/typescript-vim'
-Plug 'HerringtonDarkholme/yats.vim'
+" javascript/typescript
+Plug 'jelera/vim-javascript-syntax', {'for':'javascript'}
+Plug 'leafgarland/typescript-vim', {'for':'typescript'}
+Plug 'HerringtonDarkholme/yats.vim', {'for':'typescript'}
 " rust
 Plug 'rust-lang/rust.vim', {'for':'rust'}
 Plug 'racer-rust/vim-racer', {'for':'rust'}
@@ -117,7 +196,7 @@ set wildignore+=*.o,*.obj,.git,*.rbc,*.pyc,__pycache__
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc,*.db,*.sqlite
 
 syntax on
-set ruler 
+set ruler
 set number
 
 let no_buffers_menu=1
@@ -144,7 +223,7 @@ set formatoptions-=t         " Don't auto-wrap text
 set formatoptions-=o         " Disable comment-continuation (normal 'o'/'O')
 
 " Remove comment leader when joining lines
-if has('patch-7.3.541') | set formatoptions+=j | endif 
+if has('patch-7.3.541') | set formatoptions+=j | endif
 
 " determine which shell to use:
 set shell=/bin/sh
@@ -187,8 +266,10 @@ if !has('gui_running')
   let g:CSApprox_loaded = 1
 
   " IndentLine
-  let g:indentLine_enabled = 1
+  let g:indentLine_enabled = 0
   let g:indentLine_concealcursor = 0
+  let g:indentLine_fileTypeExclude = ['help']
+  let g:indentLine_bufNameExclude = ['_.*', 'NERD_tree.*']
   let g:indentLine_char = '┆'
   let g:indentLine_faster = 1
 
@@ -203,7 +284,7 @@ if !has('gui_running')
 
   if &term =~ '256color' | set t_ut= | endif
 
-  set title titleold="Terminal" 
+  set title titleold="Terminal"
   set titlestring=%t%(\ %M%)%(\ (%{expand(\"%:~:.:h\")})%)%(\ %a%)
 endif "1}}}
 "" Abbreviations {{{1
@@ -220,86 +301,16 @@ cnoreabbrev Qall qall
 
 "" Commands {{{1
 " remove trailing whitespaces
-command! FixWhitespace :%s/\s\+$//e
+command! TrimWhitespace :call TrimWhitespace()
 command! EditConfig    :tabedit $MYVIMRC
 command! ReloadConfig  :source $MYVIMRC
-"" Functions {{{1
-function! MenuExplOpen() "{{{
-  if @% == ""
-    20vsp .
-  else
-    exe "20vsp " . s:FnameEscape(expand("%:p:h"))
-  endif
-endfunction "}}}
-function! FoldText() "{{{
-    " for now, just don't try if version isn't 7 or higher
-    if v:version < 701 | return foldtext() | endif
-    " clear fold from fillchars to set it up the way we want later
-    let &l:fillchars = substitute(&l:fillchars,',\?fold:.','','gi')
-    let l:numwidth = (v:version < 701 ? 8 : &numberwidth)
-    if &fdm=='diff'
-      let l:linetext=''
-      let l:foldtext='---------- '.(v:foldend-v:foldstart+1).' lines the same ----------'
-      let l:align = winwidth(0)-&foldcolumn-(&nu ? Max(strlen(line('$'))+1, l:numwidth) : 0)
-      let l:align = (l:align / 2) + (strlen(l:foldtext)/2)
-      " note trailing space on next line
-      setlocal fillchars+=fold:\ 
-    elseif !exists('b:foldpat') || b:foldpat==0
-      let l:foldtext = '|'.(v:foldend-v:foldstart).' lines|'
-      let l:endofline = (&textwidth>0 ? &textwidth : 80)
-      let l:linetext = strpart(getline(v:foldstart),0,l:endofline-strlen(l:foldtext))
-      let l:linetext = substitute(l:linetext, '\{\{\{','')
-      let l:align = l:endofline-strlen(l:linetext)
-      setlocal fillchars+=fold:\ 
-    elseif b:foldpat==1
-      let l:align = winwidth(0)-&foldcolumn-(&nu ? Max(strlen(line('$'))+1, l:numwidth) : 0)
-      let l:foldtext = ' '.v:folddashes
-      let l:linetext = substitute(getline(v:foldstart),'\s\+$','','')
-      let l:linetext .= ' ---'.(v:foldend-v:foldstart-1).' lines--- '
-      let l:linetext .= substitute(getline(v:foldend),'^\s\+','','')
-      let l:linetext = strpart(l:linetext,0,l:align-strlen(l:foldtext))
-      let l:align -= strlen(l:linetext)
-      setlocal fillchars+=fold:\ 
-    endif
-    return printf('%s%*s', l:linetext, l:align, l:foldtext)
-endfunction "}}}
-function! SetupWrapping() "{{{
-  set wrap wm=2 tw=79
-endfunction "}}}
-function! SmartClose(kind) "{{{
-  if kind == 'buffer'
-    if winheight(2) < 0 && tabpagewinnr(2) == 0
-      confirm enew
-    else
-      confirm close
-    endif
-  elseif kind == 'tab'
-    confirm tabclose
-  endif
-endfunction "}}}
-" AutoMkdir() {{{
-" automatically creates a directory for current buffer 
-function! AutoMkdir()
-  let dir = expand('%:p:h')
-  if dir =~ '://' | return | endif
-  if !isdirectory(dir)
-    call mkdir(dir, 'p')
-    echo 'Created directory: '.dir
-  endif
-endfunction "}}}
-" RememberCursorPosition()  {{{ 
-" saves the cursor position (usually before exit)
-function! RememberCursorPosition()
-  if line("'\"") > 1 && line("'\"") <= line("$") 
-    exe "normal! g`\"" 
-  endif
-endfunction "}}}
 "" Auto-Command Groups {{{1
 augroup vimrc_buffer_defaults "{{{
   autocmd!
   " Modern PCs are fast enough, do syntax highlight syncing from start unless
   " 200 lines.
   autocmd BufEnter    * :syntax sync maxlines=200
+  autocmd BufWritePre * call AutoMkdir()
   autocmd BufReadPost * call RememberCursorPosition()
 augroup END "}}}
 augroup vimrc_rust "{{{
@@ -322,13 +333,10 @@ augroup vimrc_make_cmake "{{{
 augroup END "}}}
 augroup vimrc_edit "{{{
   autocmd!
-  autocmd BufEnter     $MYVIMRC :setl foldmethod=marker foldlevel=0 
+  autocmd BufEnter     $MYVIMRC :setl foldmethod=marker foldlevel=0
   autocmd BufEnter     $MYVIMRC :setl foldopen=all foldclose=
+  autocmd BufWritePre  $MYVIMRC :call TrimWhitespace()
   autocmd BufWritePost $MYVIMRC :source $MYVIMRC
-augroup END "}}}
-augroup vimrc_prewrite_cmds "{{{
-  autocmd!
-  autocmd BufWritePre * call AutoMkdir() 
 augroup END "}}}
 augroup vimrc_completion_preview_close "{{{
   autocmd!
@@ -358,7 +366,6 @@ augroup vimrc_go "{{{
   au FileType go imap <leader>dr <esc>:<C-u>GoDeclsDir<cr>
   au FileType go nmap <leader>rb :<C-u>call <SID>build_go_files()<CR>
 augroup END "}}}
-
 
 "" Mappings {{{1
 
@@ -586,7 +593,7 @@ if has_key(g:plugs, 'fzf.vim') "{{{
   if executable('rg')
     let $FZF_DEFAULT_COMMAND = 'rg --files --hidden --follow --glob "!.git/*"'
     command! -bang -nargs=* Find call fzf#vim#grep('rg --column --line-number --no-heading --fixed-strings --ignore-case --hidden --follow --glob "!.git/*" --color "always" '.shellescape(<q-args>).'| tr -d "\017"', 1, <bang>0)
-  else 
+  else
     let $FZF_DEFAULT_COMMAND =  "find * -path '*/\.*' -prune -o -path 'node_modules/**' -prune -o -path 'target/**' -prune -o -path 'dist/**' -prune -o  -type f -print -o -type l -print 2> /dev/null"
   endif
 
@@ -610,7 +617,7 @@ if has_key(g:plugs, 'fzf.vim') "{{{
   an 50.350.70 Fi&nd.&Tags 	    :Tags<CR>
   an 50.350.80 Fi&nd.&Window 	  :Windows<CR>
   an 50.350.90 Fi&nd.Fi&leType	:Filetypes<CR>
-  
+
 endif "}}}
 if has_key(g:plugs, 'ultisnips') "{{{
   let g:UltiSnipsExpandTrigger="<tab>"
@@ -619,7 +626,7 @@ if has_key(g:plugs, 'ultisnips') "{{{
   let g:UltiSnipsEditSplit="vertical"
 end "}}}
 if has_key(g:plugs, 'ale') "{{{
-  let g:ale_linters = { 
+  let g:ale_linters = {
         \ "go": ['golint', 'go vet'],
         \ 'python': ['flake8'],
         \ }
@@ -636,14 +643,22 @@ if has_key(g:plugs, 'tagbar')  "{{{
 nmap <silent> <F4> :TagbarToggle<CR>
 let g:tagbar_autofocus = 1
 end "}}}
+if has_key(g:plugs, 'vim-startify') "{{{
+
+endif "}}}
 if has_key(g:plugs, 'nerdtree') "{{{
+  let g:NERDTreeNaturalSort=1
   let g:NERDTreeChDirMode=2
+  let g:NERDTreeMouseMode=2
+  let g:NERDTreeQuitOnOpen=3
+  let g:NERDTreeShowHidden=1
+  let g:NERDTreeCreatePrefix='silent keepalt keepjumps'
   let g:NERDTreeIgnore=['\.rbc$', '\~$', '\.pyc$', '\.db$', '\.sqlite$', '__pycache__']
   let g:NERDTreeSortOrder=['^__\.py$', '\/$', '*', '\.swp$', '\.bak$', '\~$']
   let g:NERDTreeShowBookmarks=1
   let g:nerdtree_tabs_focus_on_files=1
   let g:NERDTreeMapOpenInTabSilent = '<RightMouse>'
-  let g:NERDTreeWinSize = 50
+  let g:NERDTreeWinSize = 32
   nnoremap <silent> <F2> :NERDTreeFind<CR>
   nnoremap <silent> <F3> :NERDTreeToggle<CR>
 endif "}}}
@@ -663,9 +678,9 @@ if has_key(g:plugs, 'vim-airline') "{{{
   if !exists('g:airline_powerline_fonts')
     let g:airline#extensions#tabline#left_sep = ' '
     let g:airline#extensions#tabline#left_alt_sep = '|'
-    let g:airline_left_sep          = '▶'
+    let g:airline_left_sep          = ''
     let g:airline_left_alt_sep      = '»'
-    let g:airline_right_sep         = '◀'
+    let g:airline_right_sep         = ''
     let g:airline_right_alt_sep     = '«'
     let g:airline#extensions#branch#prefix     = '⤴' "➔, ➥, ⎇
     let g:airline#extensions#readonly#symbol   = '⊘'
@@ -705,31 +720,28 @@ let Grep_Default_Options = '-IR'
 let Grep_Skip_Files = '*.log *.db'
 let Grep_Skip_Dirs = '.git node_modules'
 endif "}}}
-
 " Menu Bar Items {{{1
 " - see also :help menu
-
 if has('menu')
-  " load default menu items
-  let did_install_default_menus = 0
-  source $VIMRUNTIME/menu.vim
+  "" load default menu items
+  "let did_install_default_menus = 1
+  " source $VIMRUNTIME/menu.vim
 
-  " remove the Syntax menu entirely.
-  silent! aunmenu Syntax 
+  " remove the default menu entirely.
+  silent! aunmenu *
 
   " File menu
-  silent! aunmenu File 
-  an 1.301 &File.&New.New\ &Buffer      	 :confirm enew<CR>
-  an 1.302 &File.&New.New\ &Tab      			 :confirm tab<CR>
-  an 1.303 &File.&New.New\ &H-Split      	 :confirm sp<CR>
-  an 1.304 &File.&New.New\ &V-Split      	 :confirm vs<CR>
-  an 1.305 &File.&New.New\ &Session        :NewSession<CR>
-  an 1.320 &File.-SEP1-				             <Nop>
-  an 1.321 &File.&Open.in\ Current\ Buffer :browse confirm e<CR>
-  an 1.322 &File.&Open.in\ new\ tab        :browse tabnew<CR>
-  an 1.323 &File.&Open.in\ new\ split      :browse sp<CR>
-  an 1.324 &File.&Open.Session             :OpenSession<CR>
-  an 1.330 &File.-SEP2-				             <Nop>
+  an 1.301 &File.&New.&Buffer<Tab>:enew :confirm enew<CR>
+  an 1.302 &File.&New.&Tab<Tab>:tab  	 :confirm tab<CR>
+  an 1.303 &File.&New.&H-Split<Tab>:sp  :confirm sp<CR>
+  an 1.304 &File.&New.&V-Split<Tab>:vs  :confirm vs<CR>
+  an 1.305 &File.&New.&Session          :NewSession<CR>
+  an 1.320 &File.-SEP1-				               <Nop>
+  an 1.321 &File.&Open.in\ Current\ Buffer   :browse confirm e<CR>
+  an 1.322 &File.&Open.in\ new\ tab          :browse tabnew<CR>
+  an 1.323 &File.&Open.in\ new\ split        :browse sp<CR>
+  an 1.324 &File.&Open.Session               :OpenSession<CR>
+  an 1.330 &File.-SEP2-				               <Nop>
 
   an <silent> 1.330 &File.&Close.Current\ &Buffer :call SmartClose('buffer')<CR>
   an 1.330 &File.&Close.Current\ &Window<Tab>^Wc :confirm close<CR>
@@ -744,62 +756,74 @@ if has('menu')
   an 1.600 &File.-SEP4-				      <Nop>
   an 1.620 &File.&Quit              :confirm qa<CR>
 
-  if has("spell")
-    silent! aunmenu Tools.Spelling 
-    silent! aunmenu Edit.Spell\ Check
-    an 20.335.10  &Edit.&Spell\ Check.&Toggle	              :set spell! spl=en<CR>
-    an 20.335.130 &Edit.&Spell\ Check.&Next\ Error<Tab>]s	      ]s
-    an 20.335.130 &Edit.&Spell\ Check.&Previous\ Error<Tab>[s	  [s
-    an 20.335.140 &Edit.&Spell\ Check.Suggest\ &Corrections<Tab>z=	z=
-    an 20.335.150 &Edit.&Spell\ Check.&Repeat\ Correction<Tab>:spellrepall	:spellrepall<CR>
-    an 20.335.200 &Edit.&Spell\ Check.-SEP1-				        <Nop>
-    an 20.335.240 &Edit.&Spell\ Check.Check\ with\ "en_gb"	:set spell  spl=en_gb<CR>
-    an 20.335.260 &Edit.&Spell\ Check.Check\ with\ "en_us"	:set spell  spl=en_us<CR>
-  endif
+  an 20.335.10  &Edit.&Spell\ Check.&Toggle	              :set spell! spl=en<CR>
+  an 20.335.130 &Edit.&Spell\ Check.&Next\ Suggestion<Tab>]s	      ]s
+  an 20.335.130 &Edit.&Spell\ Check.&Previous\ Suggestion<Tab>[s	  [s
+  an 20.335.140 &Edit.&Spell\ Check.Possible\ &Corrections<Tab>z=	  z=
+  an 20.335.150 &Edit.&Spell\ Check.&Repeat\ Correction<Tab>:spellrepall	:spellrepall<CR>
+  an 20.335.200 &Edit.&Spell\ Check.-SEP1-				        <Nop>
+  an 20.335.240 &Edit.&Spell\ Check.Check\ with\ "en_gb"	:set spell  spl=en_gb<CR>
+  an 20.335.260 &Edit.&Spell\ Check.Check\ with\ "en_us"	:set spell  spl=en_us<CR>
 
-  " Tools.Fold Menu
-  if has("folding")
-    silent! aunmenu Tools.Folding 
-    silent! aunmenu Edit.Fold
-    " open close folds
-    an 20.340.110 &Edit.&Fold.&Enable/Disable<Tab>zi		      zi
-    an 20.340.120 &Edit.&Fold.Unfold\ to\ Cursor<Tab>zv		    zv
-    an 20.340.120 &Edit.&Fold.Fold\ All\ Except\ Cursor<Tab>zMzx	zMzx
-    inoremenu 20.340.120 &Edit.&Fold.Fold\ All\ Except\ Cursor<Tab>zMzx  <C-O>zM<C-O>zx
-    an 20.340.130 &Edit.&Fold.Fold\ More<Tab>zm		  zm
-    an 20.340.140 &Edit.&Fold.Fold\ All<Tab>zM		  zM
-    an 20.340.150 &Edit.&Fold.Unfold\ More<Tab>zr		zr
-    an 20.340.160 &Edit.&Fold.Unfold\ All<Tab>zR		zR
-    " fold method
-    an 20.340.200 &Edit.&Fold.-SEP1-			<Nop>
-    an 20.340.210 &Edit.&Fold.Met&hod.M&anual	          :set fdm=manual<CR>
-    an 20.340.210 &Edit.&Fold.Met&hod.I&ndent	          :set fdm=indent<CR>
-    an 20.340.210 &Edit.&Fold.Met&hod.E&xpression       :set fdm=expr<CR>
-    an 20.340.210 &Edit.&Fold.Met&hod.S&yntax	          :set fdm=syntax<CR>
-    an 20.340.210 &Edit.&Fold.Met&hod.&Diff	            :set fdm=diff<CR>
-    an 20.340.210 &Edit.&Fold.Met&hod.Ma&rker	          :set fdm=marker<CR>
-    " create and delete folds
-    vnoremenu 20.340.220 &Edit.&Fold.Create\ &Fold<Tab>zf	    zf
-    an 20.340.230 &Edit.&Fold.&Delete\ Fold<Tab>zd		        zd
-    an 20.340.240 &Edit.&Fold.Delete\ &All\ Folds<Tab>zD	    zD
-    " moving around in folds
-    an 20.340.300 &Edit.&Fold.-SEP2-				<Nop>
-    an 20.340.310.10 &Edit.&Fold.&Width.\ &0\ 	:set fdc=0<CR>
-    an 20.340.310.20 &Edit.&Fold.&Width.\ &2\ 	:set fdc=2<CR>
-    an 20.340.310.30 &Edit.&Fold.&Width.\ &3\ 	:set fdc=3<CR>
-    an 20.340.310.40 &Edit.&Fold.&Width.\ &4\ 	:set fdc=4<CR>
-    an 20.340.310.50 &Edit.&Fold.&Width.\ &5\ 	:set fdc=5<CR>
-    an 20.340.310.60 &Edit.&Fold.&Width.\ &6\ 	:set fdc=6<CR>
-    an 20.340.310.70 &Edit.&Fold.&Width.\ &7\ 	:set fdc=7<CR>
-    an 20.340.310.80 &Edit.&Fold.&Width.\ &8\ 	:set fdc=8<CR>
-  endif  " has folding
+  an 20.370    &Edit.&Change\ List.&List\ Errors<Tab>:cl			:cl<CR>
+  an 20.380    &Edit.&Change\ List.L&ist\ Messages<Tab>:cl!		:cl!<CR>
+  an 20.390    &Edit.&Change\ List.&Next\ Error<Tab>:cn			  :cn<CR>
+  an 20.400    &Edit.&Change\ List.&Previous\ Error<Tab>:cp		:cp<CR>
+  an 20.410    &Edit.&Change\ List.&Older\ List<Tab>:cold			:colder<CR>
+  an 20.420    &Edit.&Change\ List.N&ewer\ List<Tab>:cnew			:cnewer<CR>
+  an 20.430.50 &Edit.&Change\ List.Error\ &Window.&Update<Tab>:cwin	:cwin<CR>
+  an 20.430.60 &Edit.&Change\ List.Error\ &Window.&Open<Tab>:copen	:copen<CR>
+  an 20.430.70 &Edit.&Change\ List.Error\ &Window.&Close<Tab>:cclose	:cclose<CR>
 
-  silent! aunmenu Tools.Plugs 
-  an 30.350.10 &Tools.&Plugs.&Install 	:PlugInstall<CR>
-  an 30.350.20 &Tools.&Plugs.&Clean 	  :PlugClean<CR>
-  an 30.350.30 &Tools.&Plugs.&Update 	  :PlugUpdate<CR>
-  an 30.350.40 &Tools.&Plugs.Up&grade	  :PlugUpgrade<CR>
-  an 30.350.50 &Tools.&Plugs.&Status 	  :PlugStatus<CR>
+  " open close folds
+  an 20.340.110 &Edit.&Fold.&Enable/Disable<Tab>zi		      zi
+  an 20.340.120 &Edit.&Fold.Unfold\ to\ Cursor<Tab>zv		    zv
+  an 20.340.120 &Edit.&Fold.Fold\ All\ Except\ Cursor<Tab>zMzx	zMzx
+  inoremenu 20.340.120 &Edit.&Fold.Fold\ All\ Except\ Cursor<Tab>zMzx  <C-O>zM<C-O>zx
+  an 20.340.130 &Edit.&Fold.Fold\ More<Tab>zm		  zm
+  an 20.340.140 &Edit.&Fold.Fold\ All<Tab>zM		  zM
+  an 20.340.150 &Edit.&Fold.Unfold\ More<Tab>zr		zr
+  an 20.340.160 &Edit.&Fold.Unfold\ All<Tab>zR		zR
+  " fold method
+  an 20.340.200 &Edit.&Fold.-SEP1-			<Nop>
+  an 20.340.210 &Edit.&Fold.Met&hod.M&anual	          :set fdm=manual<CR>
+  an 20.340.210 &Edit.&Fold.Met&hod.I&ndent	          :set fdm=indent<CR>
+  an 20.340.210 &Edit.&Fold.Met&hod.E&xpression       :set fdm=expr<CR>
+  an 20.340.210 &Edit.&Fold.Met&hod.S&yntax	          :set fdm=syntax<CR>
+  an 20.340.210 &Edit.&Fold.Met&hod.&Diff	            :set fdm=diff<CR>
+  an 20.340.210 &Edit.&Fold.Met&hod.Ma&rker	          :set fdm=marker<CR>
+  " create and delete folds
+  vnoremenu 20.340.220 &Edit.&Fold.Create\ &Fold<Tab>zf	    zf
+  an 20.340.230 &Edit.&Fold.&Delete\ Fold<Tab>zd		        zd
+  an 20.340.240 &Edit.&Fold.Delete\ &All\ Folds<Tab>zD	    zD
+
+  an 20.9999.1 &Edit.&VIM\ Config.Edit      :EditConfig<CR>
+  an 20.9999.2 &Edit.&VIM\ Config.Reload      :source $MYVIMRC<CR>
+
+  an &Plugs.&Plug.&Install 	                     :PlugInstall<CR>
+  an &Plugs.&Plug.&Clean 	                       :PlugClean<CR>
+  an &Plugs.&Plug.&Update 	                     :PlugUpdate<CR>
+  an &Plugs.&Plug.Up&grade	                     :PlugUpgrade<CR>
+  an &Plugs.&Plug.&Status 	                     :PlugStatus<CR>
+  an &Plugs.-SEP1- 	                             <Nop>
+
+  an &Plugs.&ALE.Toggle                          :ALEToggle<CR>
+  an &Plugs.&ALE.Toggle\ Buffer                  :ALEToggleBuffer<CR>
+  an &Plugs.&ALE.Rename\ Symbol                  :ALERename<CR>
+
+  an &Plugs.&FZF.:FZF                            :FZF<CR>
+  an &Plugs.&FZF.Colorschemes                    :Colors<CR>
+  an &Plugs.&FZF.Commands                        :Commands<CR>
+  an &Plugs.&FZF.Command\ History                :History:<CR>
+  an &Plugs.&FZF.Files                           :Files<CR>
+  an &Plugs.&FZF.Filetypes                       :Filetypes<CR>
+  an &Plugs.&FZF.Helptags                        :Helptags<CR>
+  an &Plugs.&FZF.Marks                           :Marks<CR>
+  an &Plugs.&FZF.Tags                            :Tags<CR>
+
+  an &Plugs.&NERDTree.:NERDTreeToggle<Tab><F2>   :NERDTreeToggle<CR>
+
+  an &Plugs.&Tagbar.:TagbarToggle<Tab><F4>       :TagbarToggle<CR>
 
   " Window menu
   silent! aunmenu Window
@@ -824,12 +848,17 @@ if has('menu')
   an 70.410 &Window.Resi&ze.Min\ Widt&h<Tab>^W1\|			<C-W>1\|
 
   " Help Menu (#9999)
-  silent! aunmenu Help 
-  an 9999.10 &Help.&Overview<Tab><F1>	:help<CR>
-  an 9999.11 &Help.-sep1-			        <Nop>
-  an 9999.20 &Help.&User\ Manual		  :help usr_toc<CR>
-  an 9999.30 &Help.&How-To\ Links		  :help how-to<CR>
-  an 9999.75 &Help.-sep2-			        <Nop>
-  an 9999.80 &Help.&Version		        :version<CR>
-  an 9999.90 &Help.&About			        :intro<CR>
+  silent! aunmenu Help
+  an 9999.1.1 &Help.&VIM.&Overview<Tab><F1>	:help<CR>
+  an 9999.1.1 &Help.&VIM.-sep1-			        <Nop>
+  an 9999.1.1 &Help.&VIM.&User\ Manual		  :help usr_toc<CR>
+  an 9999.1.1 &Help.&VIM.&How-To\ Links		  :help how-to<CR>
+  an 9999.1.1 &Help.&VIM.-sep2-			        <Nop>
+  an 9999.1.1 &Help.&VIM.&Version		        :version<CR>
+  an 9999.1.1 &Help.&VIM.&About			        :intro<CR>
+
+  an &Help.&Plugins.fzf-vim           :tab help fzf-vim<CR>
+  an &Help.&Plugins.ALE               :tab help ale<CR>
+  an &Help.&Plugins.NERDTree          :tab help NERDTree<CR>
+
 endif " End of Menu Bar Items 1}}}
