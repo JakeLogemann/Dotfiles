@@ -862,3 +862,4 @@ if has('menu')
   an &Help.&Plugins.NERDTree          :tab help NERDTree<CR>
 
 endif " End of Menu Bar Items 1}}}
+" vim: fdm=marker fen fdl=0
