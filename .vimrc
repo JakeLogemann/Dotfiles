@@ -304,6 +304,7 @@ cnoreabbrev Qall qall
 command! TrimWhitespace :call TrimWhitespace()
 command! EditConfig    :tabedit $MYVIMRC
 command! ReloadConfig  :source $MYVIMRC
+command! Browse        :tab terminal ranger
 "" Auto-Command Groups {{{1
 augroup vimrc_buffer_defaults "{{{
   autocmd!
@@ -820,6 +821,14 @@ if has('menu')
   an &Plugs.&FZF.Helptags                        :Helptags<CR>
   an &Plugs.&FZF.Marks                           :Marks<CR>
   an &Plugs.&FZF.Tags                            :Tags<CR>
+
+  an &Git.&Status                      :Gstatus<CR>
+  an &Git.&Write+Stage<Tab>:Gw         :Gw<CR>
+  an &Git.&Write+Stage+Close<Tab>:Gwq  :Gwq<CR>
+  an &Git.&Blame                       :Gblame<CR>
+  an &Git.&Pull 	                     :Git pull<CR>
+  an &Git.&P&ush                       :Git push<CR>
+  an &Git.&Commit                      :Git commit<CR>
 
   an &Plugs.&NERDTree.:NERDTreeToggle<Tab><F2>   :NERDTreeToggle<CR>
 
