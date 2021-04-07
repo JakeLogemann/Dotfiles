@@ -111,6 +111,7 @@ call plug#begin(g:plug_install_dir)
 " Plugins List {{{1
 
 Plug 'Raimondi/delimitMate'
+Plug 'liuchengxu/vim-which-key'
 Plug 'Shougo/vimproc.vim', {'do': g:make}
 Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 Plug 'Yggdroot/indentLine'
@@ -164,6 +165,7 @@ filetype plugin indent on
 " Basic Setup {{{1
 let mapleader=','
 
+set timeoutlen=500 "quicker response on keybinds.
 set autoread  "detect/reload changed files.
 set ttyfast  "almost all TTYs are now... relatively.
 
@@ -382,46 +384,17 @@ if exists("*fugitive#statusline")
   set statusline+=%{fugitive#statusline()}
 endif
 
-"" Split
-noremap <Leader>h :<C-u>split<CR>
-noremap <Leader>v :<C-u>vsplit<CR>
-
-"" Git
-noremap <Leader>ga :Gwrite<CR>
-noremap <Leader>gc :Gcommit<CR>
-noremap <Leader>gsh :Gpush<CR>
-noremap <Leader>gll :Gpull<CR>
-noremap <Leader>gs :Gstatus<CR>
-noremap <Leader>gb :Gblame<CR>
-noremap <Leader>gd :Gvdiff<CR>
-noremap <Leader>gr :Gremove<CR>
-
-" session management
-nnoremap <leader>so :OpenSession<Space>
-nnoremap <leader>ss :SaveSession<Space>
-nnoremap <leader>sd :DeleteSession<CR>
-nnoremap <leader>sc :CloseSession<CR>
-
 "" Tabs
 nnoremap <Tab> gt
 nnoremap <S-Tab> gT
 nnoremap <silent> <S-t> :tabnew<CR>
 
-"" Set working directory
-nnoremap <leader>. :lcd %:p:h<CR>
-
-"" Opens an edit command with the path of the currently edited file filled in
-noremap <Leader>e :e <C-R>=expand("%:p:h") . "/" <CR>
-
-"" Opens a tab edit command with the path of the currently edited file filled
-noremap <Leader>te :tabe <C-R>=expand("%:p:h") . "/" <CR>
 "" Copy/Paste/Cut
 if has('unnamedplus')
   set clipboard=unnamed,unnamedplus
 endif
 
 noremap YY "+y<CR>
-noremap <leader>p "+gP<CR>
 noremap XX "+x<CR>
 
 if has('macunix')
@@ -430,17 +403,6 @@ if has('macunix')
   vmap <C-c> :w !pbcopy<CR><CR>
 endif
 
-"" Buffer nav
-noremap <leader>z :bp<CR>
-noremap <leader>q :bp<CR>
-noremap <leader>x :bn<CR>
-noremap <leader>w :bn<CR>
-
-"" Close buffer
-noremap <leader>c :bd<CR>
-
-"" Clean search (highlight)
-nnoremap <silent> <leader><space> :noh<cr>
 
 "" Switching windows
 noremap <C-j> <C-w>j
@@ -456,9 +418,92 @@ vmap > >gv
 vnoremap J :m '>+1<CR>gv=gv
 vnoremap K :m '<-2<CR>gv=gv
 
-"" Open current line on GitHub
-nnoremap <Leader>o :.Gbrowse<CR>
+" Leader Mappings {{{1
+let g:which_key_map = {}
 
+let g:which_key_map['e'] = [':NERDTreeToggle', 'tree']
+let g:which_key_map['h'] = [':<C-u>split<CR>', 'split']
+let g:which_key_map['v'] = [':<C-u>vsplit<CR>', 'vsplit']
+let g:which_key_map['~'] = [':lcd %:p:h', 'cd-here']
+"" Opens an edit command with the path of the currently edited file filled in
+"let g:which_key_map['e'] = [':e <C-R>=expand("%:p:h") . "/"', 'edit..']
+"" Opens a tab edit command with the path of the currently edited file filled
+"let g:which_key_map['te'] = [':tabe <C-R>=expand("%:p:h") . "/"', 'tabedit..']
+let g:which_key_map[' '] = [':noh', 'clear-search']
+let g:which_key_map['p'] = ['"+gP', 'paste']
+
+" Window Managment
+let g:which_key_map['w'] = {
+      \ 'name' : '+windows' ,
+      \ 'w' : ['<C-W>w'     , 'other-window'],
+      \ 'd' : ['<C-W>c'     , 'delete-window'],
+      \ '-' : ['<C-W>s'     , 'split-window-below'],
+      \ '|' : ['<C-W>v'     , 'split-window-right'],
+      \ '2' : ['<C-W>v'     , 'layout-double-columns'],
+      \ 'h' : ['<C-W>h'     , 'window-left'],
+      \ 'j' : ['<C-W>j'     , 'window-below'],
+      \ 'l' : ['<C-W>l'     , 'window-right'],
+      \ 'k' : ['<C-W>k'     , 'window-up'],
+      \ 'H' : ['<C-W>5<'    , 'expand-window-left'],
+      \ 'J' : [':resize +5'  , 'expand-window-below'],
+      \ 'L' : ['<C-W>5>'    , 'expand-window-right'],
+      \ 'K' : [':resize -5'  , 'expand-window-up'],
+      \ '=' : ['<C-W>='     , 'balance-window'],
+      \ 's' : ['<C-W>s'     , 'split-window-below'],
+      \ 'v' : ['<C-W>v'     , 'split-window-below'],
+      \ '?' : ['Windows'    , 'fzf-window'],
+      \ }
+
+" Git repo management
+let g:which_key_map['g'] = {
+      \ 'name' : '+git',
+      \ 'w' : [':Gwrite',  'write+stage'],
+      \ 'c' : [':Gcommit', 'commit'],
+      \ 'P' : [':Gpush',   'push'],
+      \ 'p' : [':Gpull',   'pull'],
+      \ 's' : [':Gstatus', 'status'],
+      \ 'b' : [':Gblame',  'blame'],
+      \ 'd' : [':Gvdiff',  'vdiff'],
+      \ 'r' : [':Gremove', 'remove'],
+      \ }
+
+" Session management
+let g:which_key_map['s'] = {
+      \ 'name' : '+session',
+      \ 'o' : [':OpenSession',  'open'],
+      \ 's' : [':SaveSession', 'save'],
+      \ 'd' : [':DeleteSession',   'delete'],
+      \ 'c' : [':CloseSession',   'close'],
+      \ }
+
+"" Buffer nav
+let g:which_key_map['b'] = {
+      \ 'name' : '+buffer',
+      \ 'n' : [':bn', 'next'],
+      \ 's' : [':bp', 'prev'],
+      \ 'd' : [':bd', 'delete'],
+      \ 'f' : [':bfirst', 'first'],
+      \ 'l' : [':blast', 'last'],
+      \ 'N' : [':enew', 'new'],
+      \ }
+
+"" fuzzy finder
+let g:which_key_map['f'] = {
+      \ 'name' : '+find',
+      \ 'f' : [':Files', 'file'],
+      \ 't' : [':Tags', 'tag'],
+      \ '?' : [':Helptags', 'help'],
+      \ 'l' : [':Lines', 'line'],
+      \ 'b' : [':Buffers', 'buffer'],
+      \ 'w' : [':Windows', 'window'],
+      \ 'c' : [':Commands', 'command'],
+      \ 'H' : [':History', 'history'],
+      \ }
+
+call which_key#register(',', "g:which_key_map") 
+nnoremap <silent> <leader> :WhichKey ','<CR>
+vnoremap <silent> <leader> :WhichKeyVisual ','<CR>
+"1}}}
 "*****************************************************************************
 "" Custom Language Configs {{{1
 "*****************************************************************************
@@ -597,12 +642,7 @@ if has_key(g:plugs, 'fzf.vim') "{{{
   else
     let $FZF_DEFAULT_COMMAND =  "find * -path '*/\.*' -prune -o -path 'node_modules/**' -prune -o -path 'target/**' -prune -o -path 'dist/**' -prune -o  -type f -print -o -type l -print 2> /dev/null"
   endif
-
   cnoremap <C-P> <C-R>=expand("%:p:h") . "/" <CR>
-  nnoremap <silent> <leader>b :Buffers<CR>
-  nnoremap <silent> <leader>e :FZF -m<CR>
-  "Recovery commands from history through FZF
-  nmap <leader>y :History:<CR>
 
   silent! aunmenu Fi&nd
   an 50.350.10 Fi&nd.&Buffer 	  :Buffers<CR>
@@ -716,7 +756,6 @@ let g:session_autosave = "no"
 let g:session_command_aliases = 1
 endif "}}}
 if has_key(g:plugs, 'grep.vim') "{{{
-nnoremap <silent> <leader>f :Rgrep<CR>
 let Grep_Default_Options = '-IR'
 let Grep_Skip_Files = '*.log *.db'
 let Grep_Skip_Dirs = '.git node_modules'
