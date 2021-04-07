@@ -10,7 +10,7 @@ set_title = true
 cleanup = true
 
 # Disable specific steps - same options as the command line flag
-disable = ["vim", "emacs","go","flatpak"]
+disable = ["vim", "emacs","tmux", "flatpak"]
 
 # Run specific steps - same options as the command line flag
 #only = ["system", "emacs"]
@@ -22,7 +22,7 @@ disable = ["vim", "emacs","go","flatpak"]
 #ssh_arguments = "-o ConnectTimeout=2"
 
 # Run inside tmux
-run_in_tmux = true
+run_in_tmux = false
 # Arguments to pass tmux when pulling Repositories
 #tmux_arguments = "-S /var/tmux.sock"
 
