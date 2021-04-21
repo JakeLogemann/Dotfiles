@@ -1,6 +1,6 @@
 #!/usr/bin/env -S just --color=always --working-directory "${HOME}" --justfile
 # vi: ft=just
-dotfiles             := "cd "+GIT_WORK_TREE+" && ./.local/share/bin/dotfiles"
+dotfiles             := "cd "+GIT_WORK_TREE+" && ./.local/bin/dotfiles"
 cyan                 := "\\u001b[36m"
 blue                 := "\\u001b[34m"
 reset                := "\\u001b[0m"

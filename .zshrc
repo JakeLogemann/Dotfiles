@@ -253,7 +253,7 @@ alias rm-broken-symlinks='find -L . -type l -exec rm -fv {} \; 2>/dev/null'
 #
 # Keybindings                                                       {{{1
 #=======================================================================
-source_if_exists "$XDG_CONFIG_DIR/zsh/skim.zsh"
+source ~/.config/zsh/plugins/skim.zsh
 
 # Make sure that the terminal is in application mode when zle is active, since
 # only then values from $terminfo are valid
@@ -396,5 +396,5 @@ bindkey -M isearch " " magic-space
 
 #                           Local Overrides                         {{{1
 #=======================================================================
-source_if_exists "$HOME/.zshrc.local"
+test ! -r ~/.zshrc.local || source ~/.zshrc.local
 # vim: fdm=marker fen fdl=0 fdo=all fcl=all

@@ -5,7 +5,7 @@ use 5.10.0;
 
 # fxp -- file transfer with progress
 print STDERR "\n\n";
-say STDERR join(" ", "fxp: rsync -avP", @ARGV);
+say STDERR join(" ", "fxp.pl: rsync -avP", @ARGV);
 print STDERR "\n\n";
 
 # if STDOUT is NOT a terminal, we simply call rsync and get out of the way.

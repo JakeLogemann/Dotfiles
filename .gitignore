@@ -2,3 +2,9 @@
 .config/nvim/plug/*
 
 tags
+
+.ssh/config.d/*
+.ssh/config
+!.ssh/config.d/default-host
+!.ssh/config.d/github
+!.ssh/config.d/gitlab
